@@ -1,0 +1,75 @@
+#1
+
+insert into textbook values
+(678901234, 'advanced database systems', 'pearson', 'elmasri');
+
+insert into book_adoption values
+(1, 2, 678901234);
+
+
+#2
+
+select c.course_no, t.book_isbn, t.book_title
+from course c, textbook t, book_adoption b
+where c.course_no = b.course_no and b.book_isbn = t.book_isbn
+and c.dept = 'cs'
+and c.course_no in (
+        select course_no
+        from book_adoption
+        group by course_no
+        having count(book_isbn) > 2
+)
+order by t.book_title;
+
+
+#3
+
+select distinct c.dept from course c
+where not exists (
+    select *
+    from book_adoption b, text t
+    where b.book_isbn = t.book_isbn
+    and b.course_id = c.course_id
+    and t.publisher <> 'pearson'
+);
+
+
+#4
+
+select s.name from student s, enroll e, course c
+where s.regno = e.regno
+and e.course_id = c.course_id
+and c.cname = 'dbms'
+and e.marks = (
+    select max(e2.marks)
+    from enroll e2, course c2
+    where e2.course_id = c2.course_id
+    and c2.cname = 'dbms'
+);
+
+
+#5
+
+create view student_courses as
+select s.regno, c.cname, e.marks
+from student s, course c, enroll e
+where s.regno = e.regno
+and e.course_id = c.course_id;
+
+
+#6
+
+delimiter $$
+
+create or replace trigger marks_check
+before insert on enroll
+for each row
+begin
+    if new.marks < 40 then
+       signal sqlstate '45000'
+       set message_text = 'cannot enroll, less marks';
+    end if;
+end $$
+
+delimiter ;
+
