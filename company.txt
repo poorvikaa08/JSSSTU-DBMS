@@ -1,0 +1,91 @@
+#1
+
+(select distinct p.pno 
+from project p, works_on w, employee e 
+where p.pno = w.pno and
+w.ssn = e.ssn and 
+e.name like '%Scott%')
+
+union 
+
+(select p.pno
+from project p, department d, employee e
+where p.dno - d.dno and
+d.mgrssn = e.ssn and
+e.name like '%Scott%');
+
+
+
+#2
+
+select e.name, e.salary * 10 as new_salary
+from employee e, works_on w, project p
+where e.ssn = w.ssn
+and w.pno = p.pno
+and p.pname = "IoT";
+
+
+#3
+
+select sum(salary), max(salary), min(salary), avg(salary) 
+from employee
+where dno = (
+	select dno from department
+	where dname = "Accounts"
+);
+
+or 
+
+select sum(salary), max(salary), min(salary), avg(salary) 
+from employee 
+join department on employee.dno = department.dno
+where department.dname = "Accounts";
+
+
+#4
+
+select e.name
+from employee e
+where not exists (
+	select p.pno from project p
+	where p.dno = 5
+	and p.pno not in (
+		select w.pno from works_on w
+		where s.ssn = e.ssn
+	)
+);
+
+
+#5
+
+select dno, count(*)
+from employee 
+where salary > 600000
+group by dno
+having count(*) > 5;
+
+
+#6
+
+create view employee_department as
+select e.name, d.dname, l.dloc 
+from employee e, department d, dlocation l
+where e.dno = d.dno and d.dno = l.dno;
+
+
+#7
+
+delimiter $$
+
+create trigger prevent_delete
+before delete on project
+for each row
+begin
+	if exists (select * from works_on where pno = old.pno) 
+	then 
+		signal sqlstate '45000'
+		set message_text = 'the project cannot be deleted!';
+	end if;
+end $$
+
+delimiter ;
