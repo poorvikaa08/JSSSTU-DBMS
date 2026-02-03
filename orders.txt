@@ -1,0 +1,100 @@
+#1
+
+select order_no, ship_date
+from shipment
+where warehouse_no = 2;
+
+
+#2
+select o.order_no, s.warehouse_no
+from customer c, orders o, shipment s
+where c.cust_no = o.cust_no
+and o.order_no = s.order_no
+and c.cname = 'kumar';
+
+
+#3
+
+select
+    c.cname,
+    count(o.order_no) as no_of_orders,
+    avg(o.order_amt) as avg_order_amt
+from customer c
+join orders o on c.cust_no = o.cust_no
+group by c.cname;
+
+
+#4
+
+delete from orders
+where cust_no = (
+    select cust_no
+    from customer
+    where cname = 'kumar'
+);
+
+
+#5
+
+select * from item
+where unitprice = (
+    select max(unitprice)
+    from item
+);
+
+
+#6
+
+delimiter $$
+
+create trigger updateorderamt
+after insert on order_item
+for each row
+begin
+    update orders
+    set order_amt =
+        new.qty * (
+            select unitprice
+            from item
+            where item = new.item
+        )
+    where order_no = new.order_no;
+end$$
+
+delimiter ;
+
+
+insert into orders values
+(006, '2020-12-23', 0004, 1200);
+
+insert into order_item values
+(006, 0001, 5);
+
+select * from orders;
+
+
+
+or
+
+create or replace trigger update_order_amt
+after insert or update on order_item
+for each row
+begin
+    update orders
+    set order_amt = order_amt +
+        (new.qty * (select unitprice
+                     from item
+                     where item# = new.item#))
+    where order# = new.order#;
+end;
+
+
+#7
+
+create view orders_warehouse_5 as
+select s.order_no, s.ship_date
+from shipment s
+where s.warehouse_no = 5;
+
+select * from orders_warehouse_5;
+

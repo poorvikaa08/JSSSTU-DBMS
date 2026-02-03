@@ -1,0 +1,79 @@
+#1
+
+select count(distinct o.driver_id) from owns o, participated p, accident a
+where o.regno = p.regno and p.report_number = a.report_number
+and a.acc_date like '%2021%';
+
+
+#2
+
+select count(distinct p.report_number) from person pe, owns o, participated p
+where pe.driver_id = o.driver_id and o.regno = p.regno
+and pe.name = 'Smith';
+
+
+#3
+
+insert into accident
+values (101, date '2021-05-10', 'bangalore');
+
+
+#4
+
+delete from car
+where regno in (
+    select o.regno
+    from person p, owns o
+    where p.driver_id = o.driver_id
+    and p.name = 'smith'
+)
+and model = 'mazda';
+
+
+#5
+
+update participated
+set damage_amount = 50000
+where regno = 'KA-09-MA-1234'
+and report_number = 101;
+
+
+#6
+
+create view accident_cars as
+select distinct c.model, c.year
+from car c, participated p
+where c.regno = p.regno;
+
+
+#7
+
+delimiter $$
+
+create trigger insurance_trigger
+before insert on participated
+for each row
+begin
+    if (
+        select count(*) from participated p, accident a
+        where p.report_number = a.report_number
+        and p.driver_id = new.driver_id
+        and year(a.acc_date) = (
+            select year(acc_date)
+            from accident
+            where report_number = new.report_number
+        )
+    ) >= 3 then
+        signal sqlstate '45000'
+        set message_text = 'cant participate';
+    end if;
+end $$
+
+delimiter ;
+
+
+
+
+
+
+
