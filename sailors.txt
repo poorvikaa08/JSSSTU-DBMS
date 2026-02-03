@@ -1,0 +1,74 @@
+#1
+
+select b.color from boats as b,sailors as s,reserves as r
+where s.sid=r.sid and b.bid=r.bid
+and s.sname = "Albert";
+
+
+#2
+
+(select distinct sid from sailors where rating >= 8)
+union
+(select sid from reserves where bid = 103);
+
+
+#3
+
+select sname from sailors 
+where sid not in (
+	select r.sid from reserves r, boat b
+	where r.bid = b.bid
+	and b.bname like '%Storm%'
+) 
+order by sname;
+
+
+#4
+
+select sname from sailors s
+where not exists (
+	select * from boat b
+	where not exists (
+		select * from reserves r
+		where r.sid = s.sid and r.bid = b.bid
+	)
+);
+
+
+#5
+
+select sname, age from sailors
+where age = (select max(age) from sailors);
+
+
+#6
+
+select r.bid, avg(s.age) from reserves r, sailors s
+where r.sid = s.sid and s.age >= 40 
+group by r.bid 
+having count(*) >= 5;
+
+
+#7
+
+create view boat_view as
+select distinct b.bname, b.color from boat b, reserves r,  sailors s
+where b.bid = r.bid and r.sid = s.sid and s.rating = 8;
+
+
+#8
+
+delimiter $$
+create trigger check_boat
+before delete on boat
+for each row
+begin
+	if exists (select * from reserves where bid = old.bid )
+	then 
+		signal sqlstate '45000'
+		set message_text = 'boat is reserved and cannot be deleted!';
+	end if;
+end $$
+
+delimiter ;
+	
