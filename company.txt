@@ -10,7 +10,7 @@ union
 
 (select p.pno
 from project p, department d, employee e
-where p.dno - d.dno and
+where p.dno = d.dno and
 d.mgrssn = e.ssn and
 e.name like '%Scott%');
 
