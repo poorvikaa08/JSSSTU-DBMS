@@ -59,10 +59,15 @@ where not exists (
 #5
 
 select dno, count(*)
-from employee 
+from employee
 where salary > 600000
-group by dno
-having count(*) > 5;
+and dno in (
+    select dno 
+    from employee 
+    group by dno 
+    having count(*) > 5
+)
+group by dno;
 
 
 #6
